@@ -1,8 +1,0 @@
-version: '3.4'
-
-services:
-  projecttst2022:
-    image: projecttst2022
-    build:
-      context: .
-      dockerfile: ./Dockerfile
