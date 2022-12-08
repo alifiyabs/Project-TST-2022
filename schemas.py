@@ -12,3 +12,6 @@ class UserView(BaseModel):
 
     class Config:
         orm_mode = True
+
+class Motor(BaseModel):
+    plat_motor: str
