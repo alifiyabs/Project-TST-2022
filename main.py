@@ -4,7 +4,7 @@ from typing import List
 #from passlib.context import CryptContext
 from schemas import schemas
 from models import models
-from routers import users, parkiran
+from routers import loginauth, users, parkiran
 
 import uvicorn
 
@@ -14,6 +14,7 @@ app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
 
 app.include_router(users.router)
+app.include_router(loginauth.router)
 app.include_router(parkiran.router)
 
 

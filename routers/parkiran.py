@@ -3,6 +3,7 @@ from schemas import schemas
 from typing import List
 from models import models
 from database import database
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 router = APIRouter()
@@ -18,11 +19,13 @@ def create_motor_parkir(request: schemas.Motor, db: Session = Depends(database.g
     db.refresh(new_motor)
     return new_motor
 
-#@app.put('/motor/{plat_motor}', status_code=status.HTTP_202_ACCEPTED)
-#def motor_keluar(plat_motor, db: Session = Depends(get_db)):
-#    db.query(models.Motor).filter(models.Motor.plat_motor == plat_motor).update({"jam_keluar" : datetime.now})
-#   db.commit()
-#    return 'Motor sudah keluar!'
+
+@router.put('/motor/{plat_motor}', status_code=status.HTTP_202_ACCEPTED, tags=['Parkiran Motor'])
+def motor_keluar(plat_motor, db: Session = Depends(database.get_db)):
+    date_time = datetime.now
+    db.query(models.Motor).filter(models.Motor.plat_motor == plat_motor).update(jam_keluar=datetime.strftime(date_time))
+    db.commit()
+    return 'Motor sudah keluar!'
 
 @router.get('/kepadatanparkiran', tags=['Parkiran Motor'])
 def kepadatan_parkiran_harian(db: Session = Depends(database.get_db)):

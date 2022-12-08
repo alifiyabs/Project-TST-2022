@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 import datetime
 from database.database import Base
 
+
 class User(Base):
     __tablename__ = 'users'
 
@@ -19,7 +20,7 @@ class Motor(Base):
     id_tempat_parkir = Column(Integer, ForeignKey('tempat_parkir_mahasiswa.id'))
     plat_motor = Column(String)
     jam_masuk = Column(DateTime, default=datetime.datetime.now)
-    jam_keluar = Column(DateTime)
+    jam_keluar = Column(DateTime)\
 
     tempat_parkir = relationship("TempatParkir", back_populates="motor_parkir")
 
