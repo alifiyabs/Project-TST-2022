@@ -20,10 +20,10 @@ def create_motor_parkir(request: schemas.Motor, db: Session = Depends(database.g
     return new_motor
 
 
-@router.put('/motor/{plat_motor}', status_code=status.HTTP_202_ACCEPTED, tags=['Parkiran Motor'])
+@router.patch('/motor/{plat_motor}', status_code=status.HTTP_202_ACCEPTED, tags=['Parkiran Motor'])
 def motor_keluar(plat_motor, db: Session = Depends(database.get_db)):
     date_time = datetime.now
-    db.query(models.Motor).filter(models.Motor.plat_motor == plat_motor).update(jam_keluar=datetime.strftime(date_time))
+    db.query(models.Motor).filter(models.Motor.plat_motor == plat_motor).update({"jam keluar" : date_time})
     db.commit()
     return 'Motor sudah keluar!'
 

@@ -15,8 +15,15 @@ class UserView(BaseModel):
         orm_mode = True
 
 class Login(BaseModel):
-    username: str
+    username_using_email: str
     password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
 
 class Motor(BaseModel):
     plat_motor: str
