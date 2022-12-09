@@ -10,7 +10,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String)
-    username = Column(String)
+    name = Column(String)
     password = Column(String)
 
 class Motor(Base):
@@ -19,8 +19,8 @@ class Motor(Base):
     id = Column(Integer, primary_key=True, index=True)
     id_tempat_parkir = Column(Integer, ForeignKey('tempat_parkir_mahasiswa.id'))
     plat_motor = Column(String)
-    jam_masuk = Column(DateTime, default=datetime.datetime.now)
-    jam_keluar = Column(DateTime)\
+    jam_masuk = Column(DateTime, default=datetime.datetime.now())
+    jam_keluar = Column(DateTime)
 
     tempat_parkir = relationship("TempatParkir", back_populates="motor_parkir")
 

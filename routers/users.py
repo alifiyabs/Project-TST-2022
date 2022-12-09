@@ -1,47 +1,42 @@
-from fastapi import APIRouter, HTTPException, status, Depends
-from schemas import schemas
-from typing import List
-from models import models
-from database import database
-from authentication.hashing import HashPass
 from sqlalchemy.orm import Session
+from models import models
+from schemas import schemas
+from fastapi import status, HTTPException, APIRouter, Depends
+from authentication.hash_password import Hash
+from database import database
 
-router = APIRouter(tags=['Users'])
+router = APIRouter(tags=["Users"])
 
-# Create User
-@router.post('/user', status_code=status.HTTP_201_CREATED)
-def create_user(request: schemas.User, db: Session = Depends(database.get_db)):
-    new_user = models.User(email=request.email, username=request.username, password=HashPass.get_hash_password(request.password))
-    user_is_available = db.query(models.User).filter(models.User.email == new_user.email).first()
-    
-    if user_is_available:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Email sudah terdaftar!")
-    
+get_db = database.get_db
+
+@router.post('/users')
+def create(request: schemas.User, db: Session = Depends(get_db)):
+    new_user = models.User(
+        name=request.name, email=request.email, password=Hash.bcrypt(request.password))
+    ada_user = db.query(models.User).filter(models.User.email == new_user.email).first()
+    if ada_user:
+        return {"Message": "Email already in use"}
     db.add(new_user)
     db.commit()
-
     db.refresh(new_user)
     return new_user
 
-# See the user that succesfully created (You can only see email and username)
-@router.get('/user', response_model=List[schemas.UserView])
-def get_all_user(db: Session = Depends(database.get_db)):
-    return db.query(models.User).all()
+@router.get('/users')
+def retrieve_user(db: Session = Depends(get_db)):
+    user = db.query(models.User.email).all()
+    return user
 
-# See the user that succesfully created by id
-@router.get('/user/{id}', status_code=200)
-def get_user_by_id(id, db: Session = Depends(database.get_db)):
-    users = db.query(models.User).filter(models.User.id == id).first()
-    if not users:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User dengan id {id} tidak ada!")
-    
-    return users
+@router.get('/users/{id}')
+def retrieve_user_by_id(id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User.email).filter(models.User.id == id).first()
+    return user
 
-# Delete user by id
-@router.delete('/user/{id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(id, db: Session = Depends(database.get_db)):
-    delete_user = db.query(models.User).filter(models.User.id == id).delete(synchronize_session=False)
-    if not delete_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User dengan {id} tidak ada!")
+@router.delete('/users/{id}')
+def delete(id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == id)
+    if not user.first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"User dengan id {id} tidak ada")
+    user.delete(synchronize_session=False)
     db.commit()
-    return {"Pesan" : f"User dengan id {id} telah dihapus!"}
+    return {"Message": f"user dengan id {id} telah dihapus"}
