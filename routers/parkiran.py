@@ -48,7 +48,7 @@ def motor_keluar(id: int, db: Session = Depends(database.get_db)):
         durasi_lebih = durasi_perjam - 2
         totalharga = 2000 + (1000*durasi_lebih)
     
-    return f'Harga yang harus dibayar adalah {totalharga} rupiah!'
+    return {f'Harga yang harus dibayar adalah {totalharga} rupiah!'}
 
 @router.get('/parkiran/sisa')
 def sisa_slot(tempat_parkir: str, db: Session = Depends(database.get_db)):
@@ -64,8 +64,15 @@ def sisa_slot(tempat_parkir: str, db: Session = Depends(database.get_db)):
     
 
 @router.get('/kepadatanparkiran')
-def kepadatan_parkiran(db: Session = Depends(database.get_db)):
-    pass
+def kepadatan_parkiran(tempat_parkir: str, db: Session = Depends(database.get_db)):
+    parkir = db.query(models.Motor.id_tempat_parkir, func.count(models.Motor.id).label('count')).group_by(models.Motor.id_tempat_parkir)
+    park = db.query(models.TempatParkir).filter(models.TempatParkir.tempat_parkir == tempat_parkir.title()).first()
+    if not park:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=["Nama parkiran tidak ditemukan"])
+    for parkee in parkir:
+        if (parkee["id_tempat_parkir"] == park.id):
+            kepadatan = (parkee["count"]/park.kuota)*100
+            return {f"Kepadatan hari ini di parkiran {tempat_parkir.title()} adalah" : f"{kepadatan} %"}
 
 @router.get('/kepadatanparkiran/{tempat_parkir}')
 def kepadatan_parkiran_perwaktu(tempat_parkir: str, db: Session = Depends(database.get_db)):
