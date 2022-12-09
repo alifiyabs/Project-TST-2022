@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from database.database import engine
+from database.database import engine, SessionLocal
 from typing import List
 #from passlib.context import CryptContext
 from schemas import schemas
@@ -17,6 +17,12 @@ app.include_router(users.router)
 app.include_router(loginauth.router)
 app.include_router(parkiran.router)
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 if __name__ == '__main__':
-    uvicorn.run('main.app', host ='0.0.0.0', port=8000, reload=True)
+    uvicorn.run("main:app", host ='0.0.0.0', port=8000, reload=True)
