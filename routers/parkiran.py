@@ -5,7 +5,7 @@ from authentication import OAuth2
 from models import models
 from sqlalchemy import func
 from database import database
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 
 router = APIRouter(tags=["Parkiran Motor"])
@@ -30,7 +30,7 @@ def create_motor_parkir(tempat_parkir: str, requset: schemas.Motor, db: Session 
     return new_motor
 
 @router.patch('/motor/{id}', status_code=status.HTTP_202_ACCEPTED)
-def motor_keluar(id: int, db: Session = Depends(database.get_db)):
+def motor_keluar(id: int, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(OAuth2.get_current_user)):
     ada_motor = db.query(models.Motor).filter(models.Motor.id == id).first()
     if ada_motor:
         ada_motor.update(jam_keluar=datetime.now())
@@ -51,8 +51,8 @@ def motor_keluar(id: int, db: Session = Depends(database.get_db)):
     return {f'Harga yang harus dibayar adalah {totalharga} rupiah!'}
 
 @router.get('/parkiran/sisa')
-def sisa_slot(tempat_parkir: str, db: Session = Depends(database.get_db)):
-    parkir = db.query(models.Motor.id_tempat_parkir, func.count(models.Motor.id).label('count')).group_by(models.Motor.id_tempat_parkir)
+def sisa_slot(tempat_parkir: str, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(OAuth2.get_current_user)):
+    parkir = db.query(models.Motor.id_tempat_parkir, func.count(models.Motor.id).label('count')).filter(models.Motor.jam_keluar == None).group_by(models.Motor.id_tempat_parkir)
     park = db.query(models.TempatParkir).filter(models.TempatParkir.tempat_parkir == tempat_parkir.title()).first()
     if not park:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=["Nama parkiran tidak ditemukan"])
@@ -64,7 +64,7 @@ def sisa_slot(tempat_parkir: str, db: Session = Depends(database.get_db)):
     
 
 @router.get('/kepadatanparkiran')
-def kepadatan_parkiran(tempat_parkir: str, db: Session = Depends(database.get_db)):
+def kepadatan_parkiran(tempat_parkir: str, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(OAuth2.get_current_user)):
     parkir = db.query(models.Motor.id_tempat_parkir, func.count(models.Motor.id).label('count')).group_by(models.Motor.id_tempat_parkir)
     park = db.query(models.TempatParkir).filter(models.TempatParkir.tempat_parkir == tempat_parkir.title()).first()
     if not park:
@@ -74,6 +74,26 @@ def kepadatan_parkiran(tempat_parkir: str, db: Session = Depends(database.get_db
             kepadatan = (parkee["count"]/park.kuota)*100
             return {f"Kepadatan hari ini di parkiran {tempat_parkir.title()} adalah" : f"{kepadatan} %"}
 
-@router.get('/kepadatanparkiran/{tempat_parkir}')
-def kepadatan_parkiran_perwaktu(tempat_parkir: str, db: Session = Depends(database.get_db)):
-    pass
+@router.get('/motormenginap')
+def motor_menginap(db: Session = Depends(database.get_db), current_user: schemas.User = Depends(OAuth2.get_current_user)):
+    # parkir = db.query(models.Motor.id_tempat_parkir, func.count(models.Motor.id).label('count')).group_by(models.Motor.id_tempat_parkir)
+    motor_menginap = []
+    hari_menginap = []
+    motors = db.query(models.Motor).all()
+    for motor in motors:
+        if ((datetime.now()-motor.jam_masuk >= timedelta(hours=24)) & (motor.jam_keluar is None)):
+            motor_menginap.append(motor)
+            lama_menginap = datetime.now() - motor.jam_masuk
+            lama_menginap_in_s = lama_menginap.total_seconds()
+            days = lama_menginap.days
+            days = divmod(lama_menginap_in_s, 86400)[0]
+            hari_menginap.append(days)
+    informasi_motor = []
+    for i in range(len(motor_menginap)):
+        listdict = [motor_menginap[i].plat_motor, hari_menginap[i]]
+        informasi_motor.append(listdict)
+    
+    list_output = []
+    for i in range(len(informasi_motor)):
+        list_output.append(f"Motor dengan plat {informasi_motor[i][0]} sudah menginap {int(informasi_motor[i][1])} hari")
+    return list_output
