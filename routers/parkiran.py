@@ -31,9 +31,11 @@ def create_motor_parkir(tempat_parkir: str, requset: schemas.Motor, db: Session 
 def motor_keluar(id: int, db: Session = Depends(database.get_db)):
     ada_motor = db.query(models.Motor).filter(models.Motor.id == id).first()
     if ada_motor:
-        pass
+        ada_motor.update(jam_keluar=datetime.now())
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=["Motor tidak valid untuk keluar!"])
+    db.commit()
+    return 'Berhasil!'
 
 @router.get('/kepadatanparkiran')
 def kepadatan_parkiran_harian(db: Session = Depends(database.get_db)):

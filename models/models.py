@@ -24,6 +24,10 @@ class Motor(Base):
 
     tempat_parkir = relationship("TempatParkir", back_populates="motor_parkir")
 
+    def update(self, jam_keluar=None):
+        if jam_keluar:
+            self.jam_keluar = jam_keluar
+
 class TempatParkir(Base):
     __tablename__ = 'tempat_parkir_mahasiswa'
 
